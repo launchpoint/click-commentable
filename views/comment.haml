@@ -1,0 +1,83 @@
+.comment{:id=>"comment_".$comment->id}
+  -$reply_count = 0
+  -$replies = Comment::find_all(array('conditions'=>array("parent_comment_id = ?", $comment->id),'order'=>'created_at ASC'))
+  -if ($replies) $reply_count = count($replies)
+  -$style_display = ($comment->rating_thread->get_vote_count() < -3) ? ("none") : ("block");
+  -$style_toggle_display = ($comment->rating_thread->get_vote_count() < -3) ? ("block") : ("none");
+  -$css = 'header'
+  -if($comment->commented->has_author($comment->author))
+    -$css .= ' author'
+  %div{:class=>$css, :id=>"comment_header_".$comment->id}
+    %div{:id=>"comment_written_".$comment->id, :style=>"display:".$style_display.";"}
+      %div{:style=>'float:left'}
+        -if ($comment->author && $comment->author && trim($comment->author->username)!='')
+          %a{:href=>view_account_url($comment->author)} +$comment->author->username
+        -else
+          -if(trim($comment->screen_name)!='')
+            +$comment->screen_name
+          -else
+            =se("Anonymous")
+        =se("said about") . " ".ago($comment->created_at)
+      %div{:style=>'float:right'}
+        -if($comment->commented->has_author($comment->author))
+          =se("Owner")
+        -else
+          =se("Customer")
+      %div{:style=>'clear:both'}
+    %div{:id=>"show_comment_".$comment->id, :style=>"display:".$style_toggle_display."; cursor:pointer;"}
+      This comment is below your viewing threshold
+      :js
+        $(document).ready(function(){
+          $("#show_comment_<?=$comment->id?>").click(function(){
+            $("#comment_body_<?=$comment->id?>").slideToggle("slow");
+            $("#show_comment_<?=$comment->id?>").hide();
+            $("#comment_written_<?=$comment->id?>").show();
+          });
+        });
+  .body{:id=>"comment_body_".$comment->id, :style=>"display:".$style_display.";"}
+    -if($comment->author && $comment->author->avatar_id != null)
+      %img{:src=>$comment->author->tiny_avatar_aurl}
+    +$comment->body
+    %br
+    -if(!$comment->comment_thread->closed_at)
+      %div{:id=>"comment_".$comment->id."_reply_form", :style=>"display:none;"}
+      -if($reply_count > 0)
+        %br
+        %a{:href=>"javascript:;", :id=>"replies_".$comment->id} +$reply_count . " Replies"
+        :js
+          $(document).ready(function(){
+            $("#replies_<?=$comment->id?>").click(function(){
+              $.ajax({
+                type: "get",
+                url: "/api/comments/<?=$comment->id?>/children",
+                success: function (response) {
+                  $("#comment_<?=$comment->id?>_replies").html(response);
+                  $("#comment_<?=$comment->id?>_replies").show();
+                }
+              });
+            });
+          });
+        %br
+      -if($current_user->id)
+        %a{:href=>"javascript:;", :id=>"reply_".$comment->id}Reply
+        :js
+          $(document).ready(function(){
+            $("#reply_<?=$comment->id?>").click(function(){
+              $.ajax({
+                type: "get",
+                url: "/api/comments/<?=$comment->comment_thread_id?>/reply_form/<?=$comment->id?>",
+                success: function (response) {
+                  $("#comment_<?=$comment->id?>_reply_form").html(response);
+                  $("#comment_<?=$comment->id?>_reply_form").show();
+                }
+              });
+            });
+          });
+      %div{:id=>"comment_".$comment->id."_replies", :style=>"display:none;"}
+
+      .footer
+        -if(!isset($ratings))
+          -$comment->rating_thread->updown_ratable()
+        -else if($ratings=="stars")
+          -$comment->rating_thread->stars_ratable()
+        -$comment->rating_threads('abuse')->abuse_ratable()

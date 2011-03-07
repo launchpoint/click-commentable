@@ -1,0 +1,34 @@
+.comment_tool
+  %form{:id=>'post_comment_'.$ct->id, :action=>post_comment_url($ct), :method=>'post'}
+    %input{:type=>'hidden', :name=>'comment[parent_comment_id]', :value=>$parent_comment_id}
+    -if(!logged_in())
+      =se("Name")
+      %input{:type=>'text', :name=>'comment[username]'}
+      %br
+    =se("Comment")
+    %br
+    %textarea.expanding{:name=>'comment[body]'}
+    %br
+    =submit_tag('Add Comment')
+  .loader{:id=>'form_loader_'.$ct->id}
+    %img{:src=>JQUERY_VPATH."/libs/loader/images/ajax-loader.gif"}
+  :js
+    $(document).ready( function() {
+      $('#post_comment_<?=$ct->id?>').ajaxForm({
+        'beforeSubmit': function(formData, jqForm, options)
+        {
+          jqForm.toggle();
+          jqForm.next('#form_loader_<?=$ct->id?>').toggle();
+        },
+        'success': function(responseText, statusText)
+        {
+          e = $(responseText);
+          $('#comment_list_<?=$ct->id?>').append(e);
+          $('#comment_list_<?=$ct->id?> > .comment:last').effect("highlight", {}, 3000);
+          jqForm = $("#post_comment_<?=$ct->id?>");
+          jqForm.toggle();
+          jqForm.next('.loader').toggle();
+        },
+        'resetForm': true
+      });
+    });          

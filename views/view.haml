@@ -1,0 +1,17 @@
+.panel
+  .title
+    =se("All Comments")
+  .body
+    -event('comment_thread_header', array('ct'=>$ct))
+    -event($ct->name . '_comment_page', array('ct'=>$ct));
+    .comments
+      #comment_list
+        -if(count($comments)==0)
+          There are no comments yet. Why not kick one off?
+        -else
+          -foreach($comments as $comment)
+            -event('comment', array('comment'=>$comment))
+    -event('comment_tool', array('ct'=>$ct))
+    -if(count($comments) > 0)
+      -event('paginate', array('current_page'=>$page, 'total_pages'=>$comments[0]->params['total_pages']))       
+-add_breadcrumb('Comments', view_comments_url($ct))

@@ -1,0 +1,10 @@
+-if($ct->comment_count > 0)
+  .comments
+    .title
+      =se($title)
+    .comment_list{:id=>'comment_list_'.$ct->id}
+      -foreach($recent_comments as $comment)
+        -event('comment', array('comment'=>$comment))
+    -if (count($comments)>count($recent_comments))
+      %a{:href=>view_comments_url($ct)} view all comments
+      

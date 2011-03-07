@@ -1,0 +1,20 @@
+-if(($readonly && $ct->comment_count > 0) || !$readonly)
+  .comments
+    .title
+      =se($title)
+    %div{:id=>'comment_list_'.$ct->id}
+      -if($ct->comment_count==0)
+        .body
+          -if(!$readonly)
+            =se("There are no comments yet. Why don't you add one?")
+      -else
+        -foreach($ct->recent_comments as $comment)
+          -event('comment', array('comment'=>$comment))
+    -if (count($ct->recent_comments)!=$ct->comment_count)
+      %a{:href=>view_comments_url($ct)} view all comments
+    -if(!$ct->closed_at)
+      -if(logged_in() && !$readonly)
+        -event('comment_tool', array('ct'=>$ct, 'parent_comment_id'=>0))
+      -elseif(!$readonly)
+        =se("If you were logged in, you could add a comment.")
+      

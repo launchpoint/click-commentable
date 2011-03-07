@@ -1,0 +1,55 @@
+-if(!isset($parent_comment_id)) $parent_comment_id = 0;
+-$form_css_id = ($parent_comment_id == 0) ? ("post_comment_".$ct->id) : ("post_comment_reply_".$parent_comment_id)
+.comment_tool
+  -if($parent_comment_id == 0)
+    %form{:id=>'post_comment_'.$ct->id, :action=>post_comment_url($ct), :method=>'post'}
+  -else
+    %form{:id=>'post_comment_reply_'.$parent_comment_id, :action=>"/api/comments/".$ct->id."/post_reply/".$parent_comment_id, :method=>'post'}
+      %input{:type=>'hidden', :name=>'comment[parent_comment_id]', :value=>$parent_comment_id}
+      -if(!logged_in())
+        =se("Name")
+        %input{:type=>'text', :name=>'comment[username]'}
+        %br
+      =se("Comment")
+      %br
+      %textarea.expanding{:name=>'comment[body]'}
+      %br
+      =submit_tag('Add Comment')
+  -if($parent_comment_id == 0)
+    .loader{:id=>'form_loader_'.$ct->id}
+      %img{:src=>JQUERY_VPATH."/libs/loader/images/ajax-loader.gif"}
+  -else
+    .loader{:id=>'reply_form_loader_'.$parent_comment_id}
+      %img{:src=>JQUERY_VPATH."/libs/loader/images/ajax-loader.gif"}
+  :js
+    $(document).ready( function() {
+      $('#<?=$form_css_id?>').ajaxForm({
+        'beforeSubmit': function(formData, jqForm, options)
+        {
+          jqForm.toggle();
+          if(<?=$parent_comment_id?> == 0) {
+            jqForm.next('#form_loader_<?=$ct->id?>').toggle();
+          }
+          else {
+            jqForm.next('#reply_form_loader_<?=$parent_comment_id?>').toggle();
+          }
+        },
+        'success': function(responseText, statusText)
+        {
+          e = $(responseText);
+          if(<?=$parent_comment_id?> == 0) {
+            $('#comment_list_<?=$ct->id?>').append(e);
+            $('#comment_list_<?=$ct->id?> > .comment:last').effect("highlight", {}, 3000);
+            jqForm = $("#post_comment_<?=$ct->id?>");
+          }
+          else {
+            $('#comment_<?=$parent_comment_id?>_replies').append(e);
+            $('#comment_<?=$parent_comment_id?>_replies > .comment:last').effect("highlight", {}, 3000);
+            jqForm = $("#comment_<?=$parent_comment_id?>_reply_form");
+          }
+          jqForm.toggle();
+          jqForm.next('.loader').toggle();
+        },
+        'resetForm': true
+      });
+    });          

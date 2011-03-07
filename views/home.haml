@@ -1,0 +1,41 @@
+.panel
+  .item
+    .title
+      =se("Abuse Review")
+    .instructions
+      =se("Click on the author to view the comment.")
+    .body
+      %table
+        %tr
+          %th =se("Comment Author")
+          %th =se("Comment Date")
+          %th =se("Abuse Reports")
+          %th
+        -foreach($comments as $comment)
+          %tr
+            %td 
+              .collapsible_head
+                -if($comment->author)
+                  +$comment->author->username
+                -else
+                  Anonymous
+              .collapsible
+                
+                %table
+                  %tr
+                    %td =se("Comment")
+                    %td =simple_format($comment->body)
+                  %tr
+                    %td =se("Upvotes")
+                    %td +$comment->rating_threads('abuse')->upvote_count
+                  %tr
+                    %td =se("Downvotes")
+                    %td +$comment->rating_threads('abuse')->downvote_count
+                  %tr
+                    %td =se("Created")
+                    %td =ago($comment->created_at)
+            %td =click_date_format($comment->created_at)
+            %td
+              +$comment->rating_threads('abuse')->score
+            %td
+              %a{:href=>comment_kill_url($comment)} =se("kill")
